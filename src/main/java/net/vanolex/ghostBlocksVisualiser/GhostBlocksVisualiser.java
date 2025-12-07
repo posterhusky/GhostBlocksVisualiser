@@ -17,6 +17,8 @@ public final class GhostBlocksVisualiser extends JavaPlugin {
     public void onEnable() {
         ProtocolLibrary.getProtocolManager().addPacketListener(new StandPacketListener(this));
 
+        getServer().getPluginManager().registerEvents(new WorldUnloadListener(), this);
+
         getLogger().info("Plugin enabled!");
     }
 
