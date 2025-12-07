@@ -1,0 +1,7 @@
+name: GhostBlocksVisualiser
+version: '1.0-SNAPSHOT'
+main: net.vanolex.ghostBlocksVisualiser.GhostBlocksVisualiser
+api-version: '1.8'
+authors: [ Vanolex ]
+depend:
+  - ProtocolLib
