@@ -61,7 +61,6 @@ public class StandPacketListener implements PacketListener {
             }
             if (stand == null) return;
 
-            System.out.print("Custom name: " + rawName);
             Integer combinedId = Utils.getCombinedId(rawName);
             if (combinedId == null) return;
 
