@@ -1,8 +1,6 @@
 package net.vanolex.ghostBlocksVisualiser;
 
 import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
-import java.util.Base64;
 
 public class Utils {
     @Nullable

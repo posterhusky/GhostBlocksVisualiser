@@ -1,16 +1,12 @@
 package net.vanolex.ghostBlocksVisualiser;
 
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
-import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import net.minecraft.server.v1_8_R3.*;
-import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftArmorStand;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
@@ -21,7 +17,7 @@ import java.util.List;
 
 public class StandPacketListener implements PacketListener {
 
-    private GhostBlocksVisualiser plugin;
+    final private GhostBlocksVisualiser plugin;
 
     public StandPacketListener(GhostBlocksVisualiser plugin) {
         this.plugin = plugin;
@@ -55,26 +51,33 @@ public class StandPacketListener implements PacketListener {
             EntityArmorStand stand = null;
             for (ArmorStand st : p.getWorld().getEntitiesByClass(ArmorStand.class)) {
                 if (st.getEntityId() != standId) continue;
-                if (!(st instanceof CraftArmorStand)) continue; // shouldnt happen but just in case
+                if (!(st instanceof CraftArmorStand)) continue; // shouldn't happen but just in case
                 stand = ((CraftArmorStand) st).getHandle();
                 break;
             }
             if (stand == null) return;
 
             Integer combinedId = Utils.getCombinedId(rawName);
-            if (combinedId == null) return;
+            if (combinedId == null) {
+                EntityFallingBlock ghost = wm.getGhostBlockOrNull(standId);
+                if (ghost == null) return;
+                connection.sendPacket(new PacketPlayOutEntityDestroy(ghost.getId()));
+                return;
+            }
 
-            EntityFallingBlock ghostBlock = wm.getOrCreateGhostBlock(standId);
-            connection.sendPacket(new PacketPlayOutEntityDestroy(ghostBlock.getId()));
-            connection.sendPacket(new PacketPlayOutSpawnEntity(ghostBlock, 70, combinedId));
-            connection.sendPacket(new PacketPlayOutAttachEntity(0, ghostBlock, stand));
+            EntityFallingBlock ghost = wm.getOrCreateGhostBlock(standId);
+            connection.sendPacket(new PacketPlayOutSpawnEntity(ghost, 70, combinedId));
+            connection.sendPacket(new PacketPlayOutAttachEntity(0, ghost, stand));
+            connection.sendPacket(new PacketPlayOutEntityEffect(standId,
+                new MobEffect(13, Integer.MAX_VALUE, 0, false, false) // gives water breathing
+            ));
         } else if (e.getPacketType() == PacketType.Play.Server.ENTITY_DESTROY) {
             int[] ids = packet.getIntegerArrays().read(0);
 
             for (int id : ids) {
-                EntityFallingBlock ghostBlock = wm.getGhostBlockOrNull(id);
-                if (ghostBlock == null) continue;
-                connection.sendPacket(new PacketPlayOutEntityDestroy(ghostBlock.getId()));
+                EntityFallingBlock ghost = wm.getGhostBlockOrNull(id);
+                if (ghost == null) continue;
+                connection.sendPacket(new PacketPlayOutEntityDestroy(ghost.getId()));
             }
         }
     }

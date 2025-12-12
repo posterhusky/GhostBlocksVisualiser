@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WorldManager {
-    private static Map<World, WorldManager> worldManagers = new HashMap<>();
+    private static final Map<World, WorldManager> worldManagers = new HashMap<>();
 
     public static WorldManager getOrCreateWorldManager(World w) {
         if (worldManagers.containsKey(w)) {
@@ -23,8 +23,8 @@ public class WorldManager {
         worldManagers.remove(w);
     }
 
-    private Map<Integer, EntityFallingBlock> ghostBlocks = new HashMap<>();
-    private WorldServer worldServer;
+    Map<Integer, EntityFallingBlock> ghostBlocks = new HashMap<>();
+    WorldServer worldServer;
 
     public WorldManager(World w) {
         worldManagers.put(w, this);
@@ -47,6 +47,7 @@ public class WorldManager {
         EntityFallingBlock ghost = new EntityFallingBlock(worldServer);
         ghost.ticksLived = 1;
         ghost.dropItem = false;
+
         ghostBlocks.put(standId, ghost);
         return ghost;
     }
