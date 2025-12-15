@@ -5,23 +5,25 @@ import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
+import com.comphenix.protocol.reflect.StructureModifier;
+import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftArmorStand;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.util.List;
+import java.util.Map;
 
 public class StandPacketListener implements PacketListener {
-
-    final private GhostBlocksVisualiser plugin;
-
-    public StandPacketListener(GhostBlocksVisualiser plugin) {
-        this.plugin = plugin;
-    }
 
     @Override
     public void onPacketSending(PacketEvent e) {
@@ -83,7 +85,41 @@ public class StandPacketListener implements PacketListener {
     }
 
     @Override
-    public void onPacketReceiving(PacketEvent event) {}
+    public void onPacketReceiving(PacketEvent e) {
+        Player p = e.getPlayer();
+        PacketContainer packet = e.getPacket();
+
+        if (packet.getType() != PacketType.Play.Client.USE_ENTITY) return;
+
+        WorldManager wm = WorldManager.getOrCreateWorldManager(p.getWorld());
+
+        int entityId = packet.getIntegers().read(0);
+
+        boolean flag = false;
+        for (Map.Entry<Integer, EntityFallingBlock> i : wm.ghostBlocks.entrySet()) {
+            if (i.getValue().getId() != entityId) continue;
+            flag = true;
+            break;
+        }
+        if (!flag) return;
+
+        LivingEntity hitEntity = Raycast.raycast(p);
+
+        if (hitEntity != null) {
+            packet.getIntegers().write(0, hitEntity.getEntityId());
+            return;
+        }
+
+        e.setCancelled(true);
+
+        EnumWrappers.EntityUseAction action = packet.getEntityUseActions().read(0);
+        if (action != EnumWrappers.EntityUseAction.ATTACK) return;
+
+        Bukkit.getScheduler().runTask(GhostBlocksVisualiser.plugin, () -> {
+            Bukkit.getPluginManager().callEvent(new PlayerInteractEvent(p, Action.LEFT_CLICK_AIR, p.getItemInHand(), null, null));
+        });
+
+    }
 
     @Override
     public ListeningWhitelist getSendingWhitelist() {
@@ -97,11 +133,15 @@ public class StandPacketListener implements PacketListener {
 
     @Override
     public ListeningWhitelist getReceivingWhitelist() {
-        return ListeningWhitelist.EMPTY_WHITELIST;
+        return ListeningWhitelist.newBuilder()
+                .types(
+                        PacketType.Play.Client.USE_ENTITY
+                )
+                .build();
     }
 
     @Override
     public Plugin getPlugin() {
-        return plugin;
+        return GhostBlocksVisualiser.plugin;
     }
 }
