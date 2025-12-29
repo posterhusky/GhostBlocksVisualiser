@@ -67,7 +67,7 @@ public class StandPacketListener implements PacketListener {
                 return;
             }
 
-            EntityFallingBlock ghost = wm.getOrCreateGhostBlock(standId);
+            EntityFallingBlock ghost = wm.getOrCreateGhostBlock(stand);
             connection.sendPacket(new PacketPlayOutSpawnEntity(ghost, 70, combinedId));
             connection.sendPacket(new PacketPlayOutAttachEntity(0, ghost, stand));
             connection.sendPacket(new PacketPlayOutEntityEffect(standId,
@@ -96,7 +96,7 @@ public class StandPacketListener implements PacketListener {
         int entityId = packet.getIntegers().read(0);
 
         boolean flag = false;
-        for (Map.Entry<Integer, EntityFallingBlock> i : wm.ghostBlocks.entrySet()) {
+        for (Map.Entry<EntityArmorStand, EntityFallingBlock> i : wm.ghostBlocks.entrySet()) {
             if (i.getValue().getId() != entityId) continue;
             flag = true;
             break;
